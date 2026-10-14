@@ -1,37 +1,37 @@
-# Derleme çıktıları
+# KESKİN SINIR: Bu repoya yalnız proje kodu girer.
+# Önce her şey dışarıda, sonra yalnız izin verilenler içeride (beyaz liste).
+# Yeni bir dosya türü ya da klasör eklenecekse burada bilerek açılır.
+
+/*
+!/.gitignore
+!/README.md
+!/LICENSE
+!/GorselArayici.slnx
+!/src/
+
+# src içinde de yalnız kod ve proje dosyaları
+/src/**/*.*
+!/src/**/*.cs
+!/src/**/*.xaml
+!/src/**/*.csproj
+
+# Derleme çıktıları (src içinde oluşur)
 bin/
 obj/
-[Dd]ebug/
-[Rr]elease/
-publish/
-artifacts/
 
-# Visual Studio / Rider / VS Code
-.vs/
-.idea/
-.vscode/
-*.user
-*.suo
-*.userprefs
-
-# NuGet
-*.nupkg
-packages/
-
-# Test sonuçları
-TestResults/
-
-# Yerel veritabanı ve kişisel veriler (fotoğraflar asla repoya girmez)
+# Kişisel veri asla girmez: resim, video, veritabanı
+# (yukarıdaki beyaz liste zaten engeller, bu ikinci kilit)
+*.png
+*.jpg
+*.jpeg
+*.heic
+*.webp
+*.gif
+*.bmp
+*.tif
+*.tiff
+*.mp4
+*.mov
 *.db
 *.db-shm
 *.db-wal
-*.jpg
-*.jpeg
-*.png
-*.heic
-!docs/**/*.png
-
-# Sistem dosyaları
-Thumbs.db
-Desktop.ini
-.DS_Store
