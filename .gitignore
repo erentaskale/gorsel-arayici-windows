@@ -1,0 +1,37 @@
+# Derleme çıktıları
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+publish/
+artifacts/
+
+# Visual Studio / Rider / VS Code
+.vs/
+.idea/
+.vscode/
+*.user
+*.suo
+*.userprefs
+
+# NuGet
+*.nupkg
+packages/
+
+# Test sonuçları
+TestResults/
+
+# Yerel veritabanı ve kişisel veriler (fotoğraflar asla repoya girmez)
+*.db
+*.db-shm
+*.db-wal
+*.jpg
+*.jpeg
+*.png
+*.heic
+!docs/**/*.png
+
+# Sistem dosyaları
+Thumbs.db
+Desktop.ini
+.DS_Store
