@@ -10,10 +10,11 @@ Binlerce fotoğraf ve ekran görüntüsü arasında aradığını bulmak zor. Wi
 
 ## Nasıl çalışır?
 
-1. Bir klasör seçersin.
-2. Uygulama fotoğrafları bir kere tarar: üzerindeki yazıyı okur (OCR) ve çekilme tarihini alır.
-3. Arama kutusuna bir kelime yazarsın, eşleşen fotoğraflar listelenir.
-4. Tıkladığın fotoğraf Windows Fotoğraflar'da açılır.
+1. Uygulama, Windows Fotoğraflar'ın **Galeri**'sinde gördüğün fotoğrafları kendisi bulur (Resimler kitaplığı). Klasör seçmen gerekmez.
+2. İlk açılışta fotoğrafları bir kere tarar: üzerindeki yazıyı okur (OCR) ve tarihini alır. Tarama arka planda sürer, beklerken de arama yapabilirsin.
+3. Sonraki açılışlarda yalnız **yeni eklenen** fotoğraflar taranır.
+4. Arama kutusuna bir kelime yazarsın, eşleşen fotoğraflar listelenir.
+5. Tıkladığın fotoğraf Windows Fotoğraflar'da açılır.
 
 ## Gizlilik
 
@@ -32,7 +33,8 @@ Her şey **senin bilgisayarında** çalışır. İnternet bağlantısı gerekmez
 ## Yol haritası
 
 **v1**
-- [ ] Klasör seçme ve tarama
+- [ ] Galerideki fotoğrafları bulma (Resimler kitaplığı)
+- [ ] Arka planda, kaldığı yerden devam eden tarama
 - [ ] OCR ile yazı okuma
 - [ ] EXIF'ten tarih okuma
 - [ ] Yazıya ve tarihe göre arama
@@ -41,7 +43,11 @@ Her şey **senin bilgisayarında** çalışır. İnternet bağlantısı gerekmez
 
 **v2**
 - [ ] Her yerden açılan kısayol tuşu (ör. `Ctrl+Alt+F`)
-- [ ] Yeni fotoğrafları arka planda otomatik tarama
+- [ ] Uygulama kapalıyken eklenen fotoğrafları da anında yakalama (klasör izleme)
+
+## Lisans
+
+[MIT](LICENSE)
 
 ## Geliştirme
 
