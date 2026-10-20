@@ -25,12 +25,13 @@ public partial class MainWindow : Window
                 _viewModel.GoruntuleCommand.Execute(oge);
         };
 
-        // Ctrl + tekerlek: kutuları büyüt/küçült. Ctrl'siz tekerlek her zamanki gibi kaydırır.
+        // Ctrl + tekerlek: yukarı = daha az ve büyük kare, aşağı = daha çok ve küçük kare (iPhone gibi).
+        // Ctrl'siz tekerlek her zamanki gibi kaydırır.
         SonucListesi.PreviewMouseWheel += (_, e) =>
         {
             if (Keyboard.Modifiers != ModifierKeys.Control)
                 return;
-            _viewModel.KutuBoyutunuDegistir(e.Delta > 0 ? +1 : -1);
+            _viewModel.SutunSayisiniDegistir(e.Delta > 0 ? -1 : +1);
             e.Handled = true;
         };
 

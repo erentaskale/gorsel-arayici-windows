@@ -1,191 +1,164 @@
 <Window x:Class="GorselArayici.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Görsel Arayıcı" Height="760" Width="1100" Icon="Assets/logo.ico"
-        Background="#FBF7F2" FontFamily="Segoe UI" FontSize="14"
+        Title="Görsel Arayıcı" Height="780" Width="1180" Icon="Assets/logo.ico"
+        Background="{StaticResource Zemin}" FontFamily="{StaticResource Font}" FontSize="14"
+        Foreground="{StaticResource Yazi}"
         FocusManager.FocusedElement="{Binding ElementName=AramaKutusu}">
     <Window.Resources>
-        <BooleanToVisibilityConverter x:Key="GorunurYap" />
+        <!-- Sonuçlar ay ay gruplanır (iPhone gibi). Alakaya göre sıralıyken ay adı boş gelir, başlık gizlenir. -->
+        <CollectionViewSource x:Key="Sonuclar" Source="{Binding Liste}">
+            <CollectionViewSource.GroupDescriptions>
+                <PropertyGroupDescription PropertyName="AyBasligi" />
+            </CollectionViewSource.GroupDescriptions>
+        </CollectionViewSource>
 
-        <!-- Sıralama seçimi için yuvarlak "hap" düğmeler -->
-        <Style x:Key="Hap" TargetType="RadioButton">
-            <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="Margin" Value="3,0,0,0" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="RadioButton">
-                        <Border x:Name="Zemin" CornerRadius="12" Padding="12,4" Background="White"
-                                BorderBrush="#E3D6C8" BorderThickness="1">
-                            <TextBlock x:Name="Yazi" Text="{TemplateBinding Content}" FontSize="12"
-                                       Foreground="#8A7B72" />
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="Zemin" Property="Background" Value="#D9895B" />
-                                <Setter TargetName="Zemin" Property="BorderBrush" Value="#D9895B" />
-                                <Setter TargetName="Yazi" Property="Foreground" Value="White" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
+        <!-- Windows 11'in kendi simge fontu (arama, ok, çarpı) -->
+        <FontFamily x:Key="Simge">Segoe Fluent Icons, Segoe MDL2 Assets</FontFamily>
+
+        <!-- "Arama kutusu boş mu?" Açılış ekranı ile sonuç ekranı arasındaki bütün farklar buna bağlı. -->
+        <Style x:Key="AramaVarkenGorunur" TargetType="FrameworkElement">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Text, ElementName=AramaKutusu}" Value="">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                </DataTrigger>
+            </Style.Triggers>
         </Style>
-
-        <!-- Büyük görünümdeki düğmeler: sade, yuvarlak köşeli -->
-        <Style x:Key="Dugme" TargetType="Button">
-            <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="Margin" Value="6,0,0,0" />
-            <Setter Property="Focusable" Value="False" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="Zemin" CornerRadius="10" Padding="14,7" Background="White"
-                                BorderBrush="#E3D6C8" BorderThickness="1">
-                            <ContentPresenter TextElement.Foreground="#3B2F2A" TextElement.FontSize="13"
-                                              HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Zemin" Property="BorderBrush" Value="#D9895B" />
-                            </Trigger>
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter TargetName="Zemin" Property="Opacity" Value="0.4" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <!-- Önceki / sonraki için iki yandaki yuvarlak oklar -->
-        <Style x:Key="Ok" TargetType="Button" BasedOn="{StaticResource Dugme}">
-            <Setter Property="Margin" Value="16,0" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="Zemin" Width="44" Height="44" CornerRadius="22" Background="White"
-                                BorderBrush="#E3D6C8" BorderThickness="1">
-                            <ContentPresenter TextElement.Foreground="#8A7B72" TextElement.FontSize="22"
-                                              HorizontalAlignment="Center" VerticalAlignment="Center"
-                                              Margin="0,0,0,3" />
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Zemin" Property="BorderBrush" Value="#D9895B" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
+        <Style x:Key="BoskenGorunur" TargetType="FrameworkElement">
+            <Setter Property="Visibility" Value="Collapsed" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Text, ElementName=AramaKutusu}" Value="">
+                    <Setter Property="Visibility" Value="Visible" />
+                </DataTrigger>
+            </Style.Triggers>
         </Style>
     </Window.Resources>
 
     <Grid>
         <!-- ===== Arama ekranı ===== -->
-        <Grid Margin="24">
+        <Grid Margin="32,22,32,14">
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <TextBlock Text="Görsel Arayıcı" FontSize="26" FontWeight="SemiBold" Foreground="#3B2F2A" />
-            <StackPanel Grid.Row="1" Margin="0,4,0,16">
-                <TextBlock Text="{Binding Durum}" Foreground="#8A7B72" />
-                <StackPanel Visibility="{Binding Taraniyor, Converter={StaticResource GorunurYap}}" Margin="0,8,0,0">
-                    <ProgressBar Value="{Binding IlerlemeYuzde}" Height="6"
-                                 Foreground="#D9895B" Background="#EDE4DA" BorderThickness="0" />
-                    <TextBlock Text="{Binding SonOkunan}" Foreground="#A89A90" FontSize="12"
-                               Margin="0,6,0,0" TextTrimming="CharacterEllipsis" />
-                </StackPanel>
-            </StackPanel>
-
-            <!-- Arama kutusu. WPF'te hazır "silik ipucu yazısı" yok; kutu boşken arkadaki yazı görünür. -->
-            <Border Grid.Row="2" Background="White" BorderBrush="#E3D6C8" BorderThickness="1"
-                    CornerRadius="10" Padding="12,8">
-                <Grid>
-                    <TextBlock Text="Resimlerin üzerindeki bir kelimeyi yaz…" Foreground="#B9ABA0"
-                               IsHitTestVisible="False" VerticalAlignment="Center">
-                        <TextBlock.Style>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="Visibility" Value="Collapsed" />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding Text, ElementName=AramaKutusu}" Value="">
-                                        <Setter Property="Visibility" Value="Visible" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </TextBlock.Style>
-                    </TextBlock>
-                    <TextBox x:Name="AramaKutusu" FontSize="16" Foreground="#3B2F2A"
-                             Background="Transparent" BorderThickness="0"
-                             Text="{Binding AramaMetni, UpdateSourceTrigger=PropertyChanged}" />
-                </Grid>
-            </Border>
-
-            <!-- Sonuç bilgisi solda, sıralama seçimi sağda -->
-            <DockPanel Grid.Row="3" Margin="4,10,0,0" LastChildFill="True">
-                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                    <TextBlock Text="Sırala:" Foreground="#8A7B72" FontSize="12" VerticalAlignment="Center"
-                               Margin="0,0,6,0" />
-                    <!-- Aynı gruptaki iki düğmeden biri seçilince öbürü kendiliğinden kalkar -->
-                    <RadioButton GroupName="Sira" Content="En yeni" IsChecked="{Binding TariheGore}"
-                                 Style="{StaticResource Hap}" />
-                    <RadioButton GroupName="Sira" Content="En alakalı" Style="{StaticResource Hap}" />
-                </StackPanel>
-                <TextBlock Text="{Binding SonucBilgisi}" Foreground="#8A7B72" FontSize="12"
-                           VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
-            </DockPanel>
-
-            <!-- Arama kutusu boşken gösterilen ipucu -->
-            <TextBlock Grid.Row="4" Text="Bir kelime yaz; üzerinde o yazı geçen resimler burada belirsin."
-                       Foreground="#B9ABA0" HorizontalAlignment="Center" Margin="0,60,0,0">
-                <TextBlock.Style>
-                    <Style TargetType="TextBlock">
-                        <Setter Property="Visibility" Value="Collapsed" />
+            <!-- Üst bölüm: kutu boşken ekranın ortasında büyük, yazınca en üstte ince bir şerit -->
+            <StackPanel Grid.Row="0">
+                <StackPanel.Style>
+                    <Style TargetType="StackPanel">
                         <Style.Triggers>
                             <DataTrigger Binding="{Binding Text, ElementName=AramaKutusu}" Value="">
-                                <Setter Property="Visibility" Value="Visible" />
+                                <Setter Property="Grid.RowSpan" Value="4" />
+                                <Setter Property="VerticalAlignment" Value="Center" />
+                                <Setter Property="MaxWidth" Value="620" />
+                                <Setter Property="Margin" Value="0,0,0,90" />
                             </DataTrigger>
                         </Style.Triggers>
                     </Style>
-                </TextBlock.Style>
-            </TextBlock>
+                </StackPanel.Style>
 
-            <!-- Sonuçlar: önizlemeli kutular, pencere genişliğine göre satır satır dizilir -->
-            <ListBox x:Name="SonucListesi" Grid.Row="4" ItemsSource="{Binding Liste}" Margin="-6,8,-6,0"
-                     Background="Transparent" BorderThickness="0"
-                     ScrollViewer.HorizontalScrollBarVisibility="Disabled">
-                <!-- Seçili kutuyu Enter ile büyüt (çift tık ve Ctrl+C kod tarafında) -->
+                <!-- Açılışta: logo, ad ve tek cümle -->
+                <StackPanel Style="{StaticResource BoskenGorunur}" HorizontalAlignment="Center" Margin="0,0,0,30">
+                    <Image Source="{StaticResource Logo}" Width="76" Height="76" />
+                    <TextBlock Text="Görsel Arayıcı" FontSize="34" FontWeight="Medium" HorizontalAlignment="Center"
+                               Margin="0,18,0,0" />
+                    <TextBlock Text="Fotoğraflarının üzerindeki yazıyla ara" FontSize="15"
+                               Foreground="{StaticResource SolukYazi}" HorizontalAlignment="Center" Margin="0,6,0,0" />
+                </StackPanel>
+
+                <DockPanel>
+                    <Image Source="{StaticResource Logo}" Width="34" Height="34" DockPanel.Dock="Left" Margin="0,0,16,0"
+                           Style="{StaticResource AramaVarkenGorunur}" />
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center"
+                                Margin="16,0,0,0" Style="{StaticResource AramaVarkenGorunur}">
+                        <!-- Aynı gruptaki iki düğmeden biri seçilince öbürü kendiliğinden kalkar -->
+                        <RadioButton GroupName="Sira" Content="En yeni" IsChecked="{Binding TariheGore}"
+                                     Style="{StaticResource Hap}" />
+                        <RadioButton GroupName="Sira" Content="En alakalı" Style="{StaticResource Hap}" />
+                    </StackPanel>
+
+                    <!-- Arama kutusu. WPF'te hazır "silik ipucu yazısı" yok; kutu boşken arkadaki yazı görünür. -->
+                    <Border Background="{StaticResource Beyaz}" BorderBrush="{StaticResource KenarKoyu}" BorderThickness="1"
+                            CornerRadius="24" Padding="18,11">
+                        <DockPanel>
+                            <TextBlock Text="&#xE721;" FontFamily="{StaticResource Simge}" FontSize="16"
+                                       Foreground="{StaticResource SolukYazi}" VerticalAlignment="Center"
+                                       DockPanel.Dock="Left" Margin="0,1,12,0" />
+                            <Grid>
+                                <TextBlock Text="Bir kelime yaz…" Foreground="{StaticResource SolukYazi}" FontSize="17"
+                                           IsHitTestVisible="False" VerticalAlignment="Center" Margin="2,0,0,0"
+                                           Style="{StaticResource BoskenGorunur}" />
+                                <TextBox x:Name="AramaKutusu" FontSize="17" Foreground="{StaticResource Yazi}"
+                                         Background="Transparent" BorderThickness="0" CaretBrush="{StaticResource Vurgu}"
+                                         Text="{Binding AramaMetni, UpdateSourceTrigger=PropertyChanged}" />
+                            </Grid>
+                        </DockPanel>
+                    </Border>
+                </DockPanel>
+
+                <!-- Tarama sürerken ince ilerleme çizgisi (her iki ekranda da) -->
+                <ProgressBar Value="{Binding IlerlemeYuzde}" Height="3" Margin="24,10,24,0" BorderThickness="0"
+                             Foreground="{StaticResource Vurgu}" Background="{StaticResource Kenar}"
+                             Visibility="{Binding Taraniyor, Converter={StaticResource GorunurYap}}" />
+                <TextBlock Text="{Binding Durum}" Foreground="{StaticResource SolukYazi}" FontSize="13"
+                           HorizontalAlignment="Center" Margin="0,14,0,0" Style="{StaticResource BoskenGorunur}" />
+            </StackPanel>
+
+            <TextBlock Grid.Row="1" Text="{Binding SonucBilgisi}" Foreground="{StaticResource SolukYazi}" FontSize="13"
+                       Margin="2,18,0,0" Style="{StaticResource AramaVarkenGorunur}" />
+
+            <!-- Sonuçlar: kare ızgara, pencereyi her zaman tam doldurur. Sütun sayısı Ctrl + tekerlekle değişir. -->
+            <ListBox x:Name="SonucListesi" Grid.Row="2" ItemsSource="{Binding Source={StaticResource Sonuclar}}"
+                     Margin="-2,4,-2,0" Background="Transparent" BorderThickness="0"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                     HorizontalContentAlignment="Stretch" Style="{StaticResource AramaVarkenGorunur}">
                 <ListBox.InputBindings>
                     <KeyBinding Key="Enter" Command="{Binding GoruntuleCommand}"
                                 CommandParameter="{Binding SelectedItem, ElementName=SonucListesi}" />
                 </ListBox.InputBindings>
+                <ListBox.GroupStyle>
+                    <GroupStyle>
+                        <GroupStyle.HeaderTemplate>
+                            <DataTemplate>
+                                <TextBlock x:Name="Baslik" Text="{Binding Name}" FontSize="18" FontWeight="Medium"
+                                           Margin="2,16,0,10" />
+                                <DataTemplate.Triggers>
+                                    <DataTrigger Binding="{Binding Name}" Value="">
+                                        <Setter TargetName="Baslik" Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </DataTemplate.Triggers>
+                            </DataTemplate>
+                        </GroupStyle.HeaderTemplate>
+                    </GroupStyle>
+                </ListBox.GroupStyle>
                 <ListBox.ItemsPanel>
                     <ItemsPanelTemplate>
-                        <WrapPanel />
+                        <UniformGrid VerticalAlignment="Top"
+                                     Columns="{Binding DataContext.SutunSayisi, RelativeSource={RelativeSource AncestorType=ListBox}}" />
                     </ItemsPanelTemplate>
                 </ListBox.ItemsPanel>
                 <ListBox.ItemContainerStyle>
-                    <!-- Varsayılan mavi seçim yerine sıcak renkli ince çerçeve -->
                     <Style TargetType="ListBoxItem">
-                        <Setter Property="Margin" Value="6" />
+                        <Setter Property="Margin" Value="2" />
+                        <Setter Property="Cursor" Value="Hand" />
                         <Setter Property="Template">
                             <Setter.Value>
                                 <ControlTemplate TargetType="ListBoxItem">
-                                    <Border x:Name="Kutu" Background="White" CornerRadius="12"
-                                            BorderBrush="#EDE4DA" BorderThickness="1.5" Padding="8">
-                                        <ContentPresenter />
-                                    </Border>
+                                    <!-- Kare: yüksekliği kendi genişliği kadar. Resim ortadan kırpılarak kareyi doldurur. -->
+                                    <Grid Height="{Binding ActualWidth, RelativeSource={RelativeSource Self}}"
+                                          Background="{StaticResource ResimBos}" ClipToBounds="True">
+                                        <Image Source="{Binding Onizleme}" Stretch="UniformToFill" />
+                                        <Border x:Name="Golge" Background="Transparent" />
+                                        <Border x:Name="Cerceve" BorderBrush="{StaticResource Vurgu}" BorderThickness="0" />
+                                    </Grid>
                                     <ControlTemplate.Triggers>
                                         <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter TargetName="Kutu" Property="BorderBrush" Value="#E9B996" />
+                                            <Setter TargetName="Golge" Property="Background" Value="#1A1F2A24" />
                                         </Trigger>
                                         <Trigger Property="IsSelected" Value="True">
-                                            <Setter TargetName="Kutu" Property="BorderBrush" Value="#D9895B" />
+                                            <Setter TargetName="Cerceve" Property="BorderThickness" Value="3" />
                                         </Trigger>
                                     </ControlTemplate.Triggers>
                                 </ControlTemplate>
@@ -193,30 +166,14 @@
                         </Setter>
                     </Style>
                 </ListBox.ItemContainerStyle>
-                <ListBox.ItemTemplate>
-                    <DataTemplate>
-                        <!-- Boyut ana ekrandaki ayardan gelir: Ctrl + tekerlek değiştirir -->
-                        <StackPanel Width="{Binding DataContext.KutuGenisligi, ElementName=SonucListesi}">
-                            <Border Height="{Binding DataContext.KutuYuksekligi, ElementName=SonucListesi}"
-                                    CornerRadius="8" Background="#F5EFE8" ClipToBounds="True">
-                                <Image Source="{Binding Onizleme}" Stretch="Uniform" />
-                            </Border>
-                            <TextBlock Text="{Binding TarihYazisi}" Foreground="#3B2F2A" FontSize="12"
-                                       FontWeight="SemiBold" Margin="2,8,2,0" />
-                            <TextBlock Text="{Binding Ozet}" Foreground="#8A7B72" FontSize="12"
-                                       TextWrapping="Wrap" MaxHeight="34" TextTrimming="CharacterEllipsis"
-                                       Margin="2,2,2,0" />
-                        </StackPanel>
-                    </DataTemplate>
-                </ListBox.ItemTemplate>
             </ListBox>
 
             <!-- Sonuç varken altta kısa kullanım ipucu -->
-            <TextBlock Grid.Row="5" Foreground="#B9ABA0" FontSize="12" HorizontalAlignment="Center" Margin="0,10,0,0"
-                       Text="Çift tık ya da Enter: büyüt  ·  Ctrl+C: resmi kopyala  ·  Ctrl + tekerlek: kutu boyutu">
+            <TextBlock Grid.Row="3" Foreground="{StaticResource SolukYazi}" FontSize="12" HorizontalAlignment="Center"
+                       Margin="0,12,0,0"
+                       Text="Çift tık ya da Enter: büyüt  ·  Ctrl+C: resmi kopyala  ·  Ctrl + tekerlek: kare boyutu">
                 <TextBlock.Style>
                     <Style TargetType="TextBlock">
-                        <Setter Property="Visibility" Value="Visible" />
                         <Style.Triggers>
                             <DataTrigger Binding="{Binding HasItems, ElementName=SonucListesi}" Value="False">
                                 <Setter Property="Visibility" Value="Collapsed" />
@@ -229,95 +186,101 @@
 
         <!-- ===== Büyük görünüm: galerinin üstünde açılan pencere =====
              Arkadaki yarı saydam katman galeriyi silik gösterir; ona tıklamak da pencereyi kapatır. -->
-        <Grid x:Name="GoruntuleyiciArkasi" Background="#993B2F2A" DataContext="{Binding Goruntuleyici}"
+        <Grid x:Name="GoruntuleyiciArkasi" Background="#991F2A24" DataContext="{Binding Goruntuleyici}"
               Visibility="{Binding Acik, Converter={StaticResource GorunurYap}}">
-        <Border Margin="48,28" CornerRadius="16" Background="#FBF7F2" BorderBrush="#E3D6C8" BorderThickness="1"
-                ClipToBounds="True">
-        <Grid>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
-                <RowDefinition Height="Auto" />
-            </Grid.RowDefinitions>
+            <Border Margin="48,28" CornerRadius="18" Background="{StaticResource Zemin}" ClipToBounds="True">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
 
-            <DockPanel Margin="24,18,24,12">
-                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Button Command="{Binding IsaretleriDegistirCommand}">
-                        <Button.Style>
-                            <Style TargetType="Button" BasedOn="{StaticResource Dugme}">
-                                <Setter Property="Content" Value="İşaretlemeyi gizle" />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsaretleriGoster}" Value="False">
-                                        <Setter Property="Content" Value="İşaretlemeyi göster" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Button.Style>
-                    </Button>
-                    <Button Content="Fotoğraflar'da aç" Command="{Binding FotograflardaAcCommand}"
-                            Style="{StaticResource Dugme}" />
-                    <!-- Pencerenin kendi çarpısı: galeriye döner (uygulamayı kapatmaz) -->
-                    <Button Content="✕" Command="{Binding KapatCommand}" Style="{StaticResource Ok}"
-                            Margin="12,0,0,0" ToolTip="Galeriye dön (Esc)" />
-                </StackPanel>
-                <StackPanel VerticalAlignment="Center">
-                    <TextBlock Text="{Binding Secili.TarihYazisi}" FontSize="18" FontWeight="SemiBold"
-                               Foreground="#3B2F2A" />
-                    <TextBlock Text="{Binding Sayac}" Foreground="#8A7B72" FontSize="12" />
-                </StackPanel>
-            </DockPanel>
+                    <DockPanel Margin="28,20,20,12">
+                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Button Command="{Binding IsaretleriDegistirCommand}">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource Dugme}">
+                                        <Setter Property="Content" Value="İşaretlemeyi gizle" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsaretleriGoster}" Value="False">
+                                                <Setter Property="Content" Value="İşaretlemeyi göster" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                            <Button Content="Fotoğraflar'da aç" Command="{Binding FotograflardaAcCommand}"
+                                    Style="{StaticResource Dugme}" />
+                            <!-- Pencerenin kendi çarpısı: galeriye döner (uygulamayı kapatmaz) -->
+                            <Button Command="{Binding KapatCommand}" Style="{StaticResource Yuvarlak}"
+                                    Margin="12,0,0,0" ToolTip="Galeriye dön (Esc)">
+                                <TextBlock Text="&#xE711;" FontFamily="{StaticResource Simge}" FontSize="14" />
+                            </Button>
+                        </StackPanel>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="{Binding Secili.TarihYazisi}" FontSize="20" FontWeight="Medium" />
+                            <TextBlock Text="{Binding Sayac}" Foreground="{StaticResource SolukYazi}" FontSize="13"
+                                       Margin="0,2,0,0" />
+                        </StackPanel>
+                    </DockPanel>
 
-            <Grid Grid.Row="1">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <Button Content="‹" Command="{Binding OncekiCommand}" Style="{StaticResource Ok}" />
-                <Button Grid.Column="2" Content="›" Command="{Binding SonrakiCommand}" Style="{StaticResource Ok}" />
+                    <Grid Grid.Row="1">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Button Command="{Binding OncekiCommand}" Style="{StaticResource Yuvarlak}">
+                            <TextBlock Text="&#xE76B;" FontFamily="{StaticResource Simge}" FontSize="14" />
+                        </Button>
+                        <Button Grid.Column="2" Command="{Binding SonrakiCommand}" Style="{StaticResource Yuvarlak}">
+                            <TextBlock Text="&#xE76C;" FontFamily="{StaticResource Simge}" FontSize="14" />
+                        </Button>
 
-                <!-- Resim ve işaret kutuları aynı piksel ölçüsünde çizilir, Viewbox ikisini birlikte
-                     pencereye sığdırır; böylece kutular kelimelerin tam üstünde kalır.
-                     DownOnly: küçük resim olduğundan büyük gösterilip bulanıklaşmaz. -->
-                <Viewbox Grid.Column="1" Stretch="Uniform" StretchDirection="DownOnly" Margin="0,0,0,8">
-                    <Grid Width="{Binding ResimGenislik}" Height="{Binding ResimYukseklik}">
-                        <Image Source="{Binding Resim}" Stretch="Fill" />
-                        <ItemsControl ItemsSource="{Binding Isaretler}"
-                                      Visibility="{Binding IsaretleriGoster, Converter={StaticResource GorunurYap}}">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <Canvas />
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                            <ItemsControl.ItemContainerStyle>
-                                <Style TargetType="ContentPresenter">
-                                    <Setter Property="Canvas.Left" Value="{Binding X}" />
-                                    <Setter Property="Canvas.Top" Value="{Binding Y}" />
-                                </Style>
-                            </ItemsControl.ItemContainerStyle>
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <!-- Kelimeden biraz taşan, yarı saydam turuncu çerçeve.
-                                         Kalınlık resmin boyutuna göre: büyük resim küçültülünce de görünsün. -->
-                                    <Border Width="{Binding Genislik}" Height="{Binding Yukseklik}"
-                                            BorderBrush="#D9895B" CornerRadius="4" Background="#33D9895B"
-                                            BorderThickness="{Binding DataContext.CerceveKalinligi, RelativeSource={RelativeSource AncestorType=ItemsControl}}" />
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
+                        <!-- Resim ve işaret kutuları aynı piksel ölçüsünde çizilir, Viewbox ikisini birlikte
+                             pencereye sığdırır; böylece kutular kelimelerin tam üstünde kalır.
+                             DownOnly: küçük resim olduğundan büyük gösterilip bulanıklaşmaz. -->
+                        <Viewbox Grid.Column="1" Stretch="Uniform" StretchDirection="DownOnly" Margin="0,0,0,8">
+                            <Grid Width="{Binding ResimGenislik}" Height="{Binding ResimYukseklik}">
+                                <Image Source="{Binding Resim}" Stretch="Fill" />
+                                <ItemsControl ItemsSource="{Binding Isaretler}"
+                                              Visibility="{Binding IsaretleriGoster, Converter={StaticResource GorunurYap}}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <Canvas />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemContainerStyle>
+                                        <Style TargetType="ContentPresenter">
+                                            <Setter Property="Canvas.Left" Value="{Binding X}" />
+                                            <Setter Property="Canvas.Top" Value="{Binding Y}" />
+                                        </Style>
+                                    </ItemsControl.ItemContainerStyle>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <!-- Kelimeden biraz taşan, yarı saydam yeşil çerçeve.
+                                                 Kalınlık resmin boyutuna göre: büyük resim küçültülünce de görünsün. -->
+                                            <Border Width="{Binding Genislik}" Height="{Binding Yukseklik}"
+                                                    BorderBrush="{StaticResource Vurgu}" CornerRadius="4" Background="#333F7D5C"
+                                                    BorderThickness="{Binding DataContext.CerceveKalinligi, RelativeSource={RelativeSource AncestorType=ItemsControl}}" />
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </Grid>
+                        </Viewbox>
                     </Grid>
-                </Viewbox>
-            </Grid>
 
-            <TextBlock Grid.Row="2" Foreground="#B9ABA0" FontSize="12" HorizontalAlignment="Center"
-                       Margin="0,0,0,14" Text="← →: önceki / sonraki  ·  ✕ ya da Esc: galeriye dön  ·  Ctrl+C: resmi kopyala" />
-        </Grid>
-        </Border>
+                    <TextBlock Grid.Row="2" Foreground="{StaticResource SolukYazi}" FontSize="12" HorizontalAlignment="Center"
+                               Margin="0,0,0,16"
+                               Text="← →: önceki / sonraki  ·  ✕ ya da Esc: galeriye dön  ·  Ctrl+C: resmi kopyala" />
+                </Grid>
+            </Border>
         </Grid>
 
         <!-- Kısa bildirim ("Kopyalandı" gibi), her iki ekranda da altta belirir -->
-        <Border VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,0,0,44"
-                Background="#3B2F2A" CornerRadius="16" Padding="16,8" IsHitTestVisible="False">
+        <Border VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,0,0,48"
+                Background="{StaticResource Yazi}" CornerRadius="16" Padding="18,9" IsHitTestVisible="False">
             <TextBlock Text="{Binding Bildirim}" Foreground="White" FontSize="13" />
             <Border.Style>
                 <Style TargetType="Border">

@@ -4,12 +4,12 @@ using System.Text.Json;
 namespace GorselArayici.Services;
 
 /// <summary>
-/// Kullanıcının seçtiği küçük tercihleri (şimdilik kutu boyutu) hatırlar.
+/// Kullanıcının seçtiği küçük tercihleri (şimdilik ızgaradaki sütun sayısı) hatırlar.
 /// Veritabanının yanında, AppData\Local\GorselArayici\ayarlar.json dosyasında durur.
 /// </summary>
 public sealed class Ayarlar
 {
-    public double KutuGenisligi { get; set; } = 190;
+    public int SutunSayisi { get; set; } = 6;
 
     private static string DosyaYolu =>
         Path.Combine(Path.GetDirectoryName(Veritabani.DosyaYolu)!, "ayarlar.json");

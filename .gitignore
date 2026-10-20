@@ -16,6 +16,9 @@
 !/src/**/*.csproj
 # Uygulama simgesi (kişisel değil, bizim çizdiğimiz logo)
 !/src/**/Assets/*.ico
+# Gömülü font ve lisansı (DM Sans, açık lisanslı)
+!/src/**/Assets/Fonts/*.ttf
+!/src/**/Assets/Fonts/OFL.txt
 
 # Derleme çıktıları (src içinde oluşur)
 bin/

@@ -8,10 +8,10 @@ namespace GorselArayici.Services;
 /// </summary>
 public static class Onizleyici
 {
-    // Kutu en büyük boyutundayken resim alanı bu kadar. Önizleme buna sığacak kadar küçük çözülür:
-    // 2500 piksellik ekran görüntüsünü tam boy bellekte tutmak yerine küçük hali tutulur.
-    public const int KutuEnBuyukGenislik = 300;
-    public const int KutuEnBuyukYukseklik = 378;
+    // Izgaradaki kare, resmin ortasını kırparak gösterir (iPhone gibi); bu yüzden resmin kısa kenarı
+    // karenin en büyük boyutu kadar olsun yeter. 2500 piksellik ekran görüntüsünü tam boy bellekte
+    // tutmak yerine bu küçük hali tutulur.
+    private const int KareEnBuyuk = 320;
 
     /// <summary>
     /// Kutu için küçük önizleme ve resmin gerçek piksel boyutu. Açılamazsa resim null (kutu boş kalır).
@@ -22,12 +22,10 @@ public static class Onizleyici
         {
             using var dosya = File.OpenRead(yol);
 
-            // Önce yalnız boyutu oku (resmin tamamını çözmeden), sonra kutuya sığacak ölçüde çöz.
+            // Önce yalnız boyutu oku (resmin tamamını çözmeden), sonra kısa kenarı kareyi dolduracak ölçüde çöz.
             var kare = BitmapDecoder.Create(dosya, BitmapCreateOptions.DelayCreation | BitmapCreateOptions.IgnoreColorProfile,
                 BitmapCacheOption.None).Frames[0];
-            var oran = Math.Min(1.0, Math.Min(
-                (double)KutuEnBuyukGenislik / kare.PixelWidth,
-                (double)KutuEnBuyukYukseklik / kare.PixelHeight));
+            var oran = Math.Min(1.0, (double)KareEnBuyuk / Math.Min(kare.PixelWidth, kare.PixelHeight));
             dosya.Position = 0;
 
             return (Coz(dosya, (int)Math.Max(1, kare.PixelWidth * oran)), kare.PixelWidth, kare.PixelHeight);

@@ -9,11 +9,14 @@ using GorselArayici.Services;
 namespace GorselArayici.ViewModels;
 
 /// <summary>Bir arama sonucu kutusu.</summary>
-public partial class ResimOgesi(string ad, string ozet, string yol, DateTime tarih) : ObservableObject
+/// <param name="ayBasligi">Izgaradaki grup başlığı ("Ekim 2026"); tarihe göre sıralı değilse boş.</param>
+public partial class ResimOgesi(string ad, string ozet, string yol, DateTime tarih, string ayBasligi) : ObservableObject
 {
     public string Ad { get; } = ad;
 
     public DateTime Tarih { get; } = tarih;
+
+    public string AyBasligi { get; } = ayBasligi;
 
     /// <summary>Kutuda gösterilen tarih: "12 Kasım 2023".</summary>
     public string TarihYazisi => Tarih.ToString("d MMMM yyyy", new System.Globalization.CultureInfo("tr-TR"));
@@ -75,32 +78,28 @@ public partial class MainViewModel : ObservableObject
     private string bildirim = "";
     private int _bildirimNo;
 
-    // Kutu boyutu: Ctrl + tekerlekle değişir, son seçim hatırlanır.
-    private const double KutuEnKucuk = 110;
-    private const double KutuAdimi = 20;
+    // Izgaradaki sütun sayısı: Ctrl + tekerlekle değişir (iPhone gibi), son seçim hatırlanır.
+    // Kareler pencereyi her zaman tam doldurur; değişen şey satırdaki kare sayısıdır.
+    private const int EnAzSutun = 3;
+    private const int EnCokSutun = 12;
     private readonly Ayarlar _ayarlar = Ayarlar.Oku();
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(KutuYuksekligi))]
-    private double kutuGenisligi;
-
-    /// <summary>Resim alanı biraz uzun dikdörtgen: telefon ekran görüntüleri de rahat sığsın.</summary>
-    public double KutuYuksekligi => KutuGenisligi * Onizleyici.KutuEnBuyukYukseklik / Onizleyici.KutuEnBuyukGenislik;
+    private int sutunSayisi;
 
     public MainViewModel()
     {
-        KutuGenisligi = Math.Clamp(_ayarlar.KutuGenisligi, KutuEnKucuk, Onizleyici.KutuEnBuyukGenislik);
+        SutunSayisi = Math.Clamp(_ayarlar.SutunSayisi, EnAzSutun, EnCokSutun);
         Goruntuleyici.BildirimVar += Bildir;
     }
 
-    /// <param name="yon">+1 büyüt, -1 küçült.</param>
-    public void KutuBoyutunuDegistir(int yon)
+    /// <param name="yon">+1 daha çok (küçük) kare, -1 daha az (büyük) kare.</param>
+    public void SutunSayisiniDegistir(int yon)
     {
-        KutuGenisligi = Math.Clamp(KutuGenisligi + yon * KutuAdimi, KutuEnKucuk, Onizleyici.KutuEnBuyukGenislik);
-        _ayarlar.KutuGenisligi = KutuGenisligi;
+        SutunSayisi = Math.Clamp(SutunSayisi + yon, EnAzSutun, EnCokSutun);
+        _ayarlar.SutunSayisi = SutunSayisi;
         _ayarlar.Kaydet();
     }
-
     /// <summary>Kutuyu uygulamanın içinde büyük açar; ← → ile bu aramanın sonuçlarında gezilir.</summary>
     [RelayCommand]
     private void Goruntule(ResimOgesi? oge)
@@ -138,7 +137,7 @@ public partial class MainViewModel : ObservableObject
     {
         // 12 bin dosyayı gezmek birkaç saniye sürebilir; pencere donmasın diye arka planda.
         var yollar = await Task.Run(GaleriBulucu.ResimleriBul);
-        Durum = $"Galeride {yollar.Count:N0} resim bulundu";
+        Durum = $"{yollar.Count:N0} resim bulundu";
 
         await TaraAsync(yollar);
     }
@@ -186,9 +185,12 @@ public partial class MainViewModel : ObservableObject
         if (TariheGore)
             hepsi = hepsi.OrderByDescending(b => b.Tarih);
 
+        // Tarihe göre sıralıysa kareler ay ay gruplanır (iPhone gibi); alakaya göreyse tek parça.
+        var turkce = new System.Globalization.CultureInfo("tr-TR");
         var ogeler = hepsi
             .Take(EnFazlaKutu)
-            .Select(b => new ResimOgesi(Path.GetFileName(b.Yol), Ozet(b.Metin, ilkKelime), b.Yol, b.Tarih))
+            .Select(b => new ResimOgesi(Path.GetFileName(b.Yol), Ozet(b.Metin, ilkKelime), b.Yol, b.Tarih,
+                TariheGore ? b.Tarih.ToString("MMMM yyyy", turkce) : ""))
             .ToList();
         Liste = ogeler;
 
@@ -196,8 +198,8 @@ public partial class MainViewModel : ObservableObject
         SonucBilgisi = bulunanlar.Count switch
         {
             0 => "Bu yazıyı içeren resim bulunamadı",
-            > EnFazlaKutu => $"{bulunanlar.Count:N0} resim bulundu, {siraAdi} {EnFazlaKutu} tanesi gösteriliyor",
-            var n => $"{n:N0} resim bulundu",
+            > EnFazlaKutu => $"{bulunanlar.Count:N0} sonuç · {siraAdi} {EnFazlaKutu} tanesi",
+            var n => $"{n:N0} sonuç",
         };
 
         await OnizlemeleriYukleAsync(ogeler, no);
@@ -224,7 +226,6 @@ public partial class MainViewModel : ObservableObject
     private async Task TaraAsync(List<string> yollar)
     {
         Taraniyor = true;
-        var sure = Stopwatch.StartNew();
 
         // Progress, raporu pencerenin kendi iş parçacığına taşır; arayüz güvenle güncellenir.
         var ilerleme = new Progress<TaramaDurumu>(d =>
@@ -237,10 +238,8 @@ public partial class MainViewModel : ObservableObject
         try
         {
             _tarama = Task.Run(() => Tarayici.TaraAsync(yollar, ilerleme, _iptal.Token));
-            var okunan = await _tarama;
-            Durum = okunan == 0
-                ? $"Galeride {yollar.Count:N0} resim var, hepsi okunmuş"
-                : $"{okunan:N0} resim okundu ({sure.Elapsed.TotalMinutes:N1} dk)";
+            await _tarama;
+            Durum = $"{yollar.Count:N0} resim aranmaya hazır";
         }
         catch (Exception hata)
         {

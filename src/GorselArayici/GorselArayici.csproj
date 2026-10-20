@@ -14,6 +14,8 @@
   <ItemGroup>
     <!-- Pencerenin ve görev çubuğunun simgesi için uygulamanın içine gömülür -->
     <Resource Include="Assets\logo.ico" />
+    <!-- DM Sans (SIL Open Font License, Assets\Fonts\OFL.txt): her bilgisayarda aynı görünsün diye gömülü -->
+    <Resource Include="Assets\Fonts\*.ttf" />
   </ItemGroup>
 
   <ItemGroup>
