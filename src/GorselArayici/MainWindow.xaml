@@ -6,6 +6,30 @@
         FocusManager.FocusedElement="{Binding ElementName=AramaKutusu}">
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="GorunurYap" />
+
+        <!-- Sıralama seçimi için yuvarlak "hap" düğmeler -->
+        <Style x:Key="Hap" TargetType="RadioButton">
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Margin" Value="3,0,0,0" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border x:Name="Zemin" CornerRadius="12" Padding="12,4" Background="White"
+                                BorderBrush="#E3D6C8" BorderThickness="1">
+                            <TextBlock x:Name="Yazi" Text="{TemplateBinding Content}" FontSize="12"
+                                       Foreground="#8A7B72" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Zemin" Property="Background" Value="#D9895B" />
+                                <Setter TargetName="Zemin" Property="BorderBrush" Value="#D9895B" />
+                                <Setter TargetName="Yazi" Property="Foreground" Value="White" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Window.Resources>
     <Grid Margin="24">
         <Grid.RowDefinitions>
@@ -50,8 +74,19 @@
             </Grid>
         </Border>
 
-        <TextBlock Grid.Row="3" Text="{Binding SonucBilgisi}" Foreground="#8A7B72" FontSize="12"
-                   Margin="4,8,0,0" />
+        <!-- Sonuç bilgisi solda, sıralama seçimi sağda -->
+        <DockPanel Grid.Row="3" Margin="4,10,0,0" LastChildFill="True">
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                <TextBlock Text="Sırala:" Foreground="#8A7B72" FontSize="12" VerticalAlignment="Center"
+                           Margin="0,0,6,0" />
+                <!-- Aynı gruptaki iki düğmeden biri seçilince öbürü kendiliğinden kalkar -->
+                <RadioButton GroupName="Sira" Content="En yeni" IsChecked="{Binding TariheGore}"
+                             Style="{StaticResource Hap}" />
+                <RadioButton GroupName="Sira" Content="En alakalı" Style="{StaticResource Hap}" />
+            </StackPanel>
+            <TextBlock Text="{Binding SonucBilgisi}" Foreground="#8A7B72" FontSize="12"
+                       VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+        </DockPanel>
 
         <!-- Arama kutusu boşken gösterilen ipucu -->
         <TextBlock Grid.Row="4" Text="Bir kelime yaz; üzerinde o yazı geçen resimler burada belirsin."
@@ -112,9 +147,11 @@
                         <Border Height="240" CornerRadius="8" Background="#F5EFE8" ClipToBounds="True">
                             <Image Source="{Binding Onizleme}" Stretch="Uniform" />
                         </Border>
+                        <TextBlock Text="{Binding TarihYazisi}" Foreground="#3B2F2A" FontSize="12"
+                                   FontWeight="SemiBold" Margin="2,8,2,0" />
                         <TextBlock Text="{Binding Ozet}" Foreground="#8A7B72" FontSize="12"
                                    TextWrapping="Wrap" MaxHeight="34" TextTrimming="CharacterEllipsis"
-                                   Margin="2,8,2,0" />
+                                   Margin="2,2,2,0" />
                     </StackPanel>
                 </DataTemplate>
             </ListBox.ItemTemplate>

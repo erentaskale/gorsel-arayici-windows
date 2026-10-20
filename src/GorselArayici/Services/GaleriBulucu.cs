@@ -4,7 +4,7 @@ namespace GorselArayici.Services;
 
 /// <summary>
 /// Windows Fotoğraflar'ın Galeri'sindeki resimleri bulur.
-/// Galeri, kullanıcının Resimler klasöründen beslenir (bu bilgisayarda OneDrive\Resimler).
+/// Galeri, kullanıcının Resimler klasöründen beslenir (OneDrive yedeklemesi açıksa OneDrive altındadır).
 /// </summary>
 public static class GaleriBulucu
 {

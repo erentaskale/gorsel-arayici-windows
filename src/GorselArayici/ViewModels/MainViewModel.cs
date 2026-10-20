@@ -9,9 +9,14 @@ using GorselArayici.Services;
 namespace GorselArayici.ViewModels;
 
 /// <summary>Bir arama sonucu kutusu.</summary>
-public partial class ResimOgesi(string ad, string ozet, string yol) : ObservableObject
+public partial class ResimOgesi(string ad, string ozet, string yol, DateTime tarih) : ObservableObject
 {
     public string Ad { get; } = ad;
+
+    public DateTime Tarih { get; } = tarih;
+
+    /// <summary>Kutuda gösterilen tarih: "12 Kasım 2023".</summary>
+    public string TarihYazisi => Tarih.ToString("d MMMM yyyy", new System.Globalization.CultureInfo("tr-TR"));
 
     /// <summary>Resimdeki yazıdan, aranan kelimenin geçtiği kısa bir parça.</summary>
     public string Ozet { get; } = ozet;
@@ -50,6 +55,15 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private string sonucBilgisi = "";
 
+    /// <summary>true: en yeni resim önce. false: yazıya en çok uyan önce.</summary>
+    [ObservableProperty]
+    private bool tariheGore = true;
+
+    // Kutuların hepsi önizleme resmi demek; bellek şişmesin diye en fazla bu kadar gösterilir.
+    private const int EnFazlaKutu = 200;
+
+    partial void OnTariheGoreChanged(bool value) => _ = AraAsync(AramaMetni);
+
     public async Task YukleAsync()
     {
         // 12 bin dosyayı gezmek birkaç saniye sürebilir; pencere donmasın diye arka planda.
@@ -77,7 +91,7 @@ public partial class MainViewModel : ObservableObject
             return;
         }
 
-        List<(string Yol, string Metin)> bulunanlar;
+        List<(string Yol, string Metin, long Degisme)> bulunanlar;
         try
         {
             bulunanlar = await Task.Run(() =>
@@ -97,15 +111,22 @@ public partial class MainViewModel : ObservableObject
             return;
 
         var ilkKelime = Normallestirici.Kelimeler(sorgu).FirstOrDefault() ?? "";
-        var ogeler = bulunanlar
-            .Select(b => new ResimOgesi(Path.GetFileName(b.Yol), Ozet(b.Metin, ilkKelime), b.Yol))
+        // Veritabanı alaka sırasıyla verir; tarih seçiliyse önce hepsi tarihe göre dizilir, sonra ilk 200 alınır.
+        var hepsi = bulunanlar.Select(b => (b.Yol, b.Metin, Tarih: TarihBulucu.Bul(b.Yol, b.Degisme)));
+        if (TariheGore)
+            hepsi = hepsi.OrderByDescending(b => b.Tarih);
+
+        var ogeler = hepsi
+            .Take(EnFazlaKutu)
+            .Select(b => new ResimOgesi(Path.GetFileName(b.Yol), Ozet(b.Metin, ilkKelime), b.Yol, b.Tarih))
             .ToList();
         Liste = ogeler;
 
+        var siraAdi = TariheGore ? "en yeni" : "en alakalı";
         SonucBilgisi = bulunanlar.Count switch
         {
             0 => "Bu yazıyı içeren resim bulunamadı",
-            >= Veritabani.EnFazlaSonuc => $"En alakalı {Veritabani.EnFazlaSonuc} resim · büyütmek için çift tıkla",
+            > EnFazlaKutu => $"{bulunanlar.Count:N0} resim bulundu, {siraAdi} {EnFazlaKutu} tanesi gösteriliyor · büyütmek için çift tıkla",
             var n => $"{n:N0} resim bulundu · büyütmek için çift tıkla",
         };
 

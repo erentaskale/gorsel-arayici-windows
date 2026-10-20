@@ -13,9 +13,6 @@ public sealed class Veritabani : IDisposable
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
         "GorselArayici", "galeri.db");
 
-    // Her sonuç bir önizleme resmi demek; bellek şişmesin diye en alakalı 200 tanesi.
-    public const int EnFazlaSonuc = 200;
-
     private readonly SqliteConnection _baglanti;
 
     public Veritabani()
@@ -122,8 +119,9 @@ public sealed class Veritabani : IDisposable
     /// <summary>
     /// Yazdığın her kelimeyle başlayan kelimeleri içeren resimleri bulur ("fat" → "fatura").
     /// Birden çok kelime yazılırsa hepsi geçmeli. En alakalı sonuç önce gelir.
+    /// Hepsi döner (sınırsız): tarihe göre sıralarken en yenileri kaçırmamak için.
     /// </summary>
-    public List<(string Yol, string Metin)> Ara(string sorgu)
+    public List<(string Yol, string Metin, long Degisme)> Ara(string sorgu)
     {
         var kelimeler = Normallestirici.Kelimeler(sorgu);
         if (kelimeler.Length == 0)
@@ -134,19 +132,17 @@ public sealed class Veritabani : IDisposable
 
         using var komut = _baglanti.CreateCommand();
         komut.CommandText = """
-            SELECT r.yol, r.metin
+            SELECT r.yol, r.metin, r.degisme
             FROM ara JOIN resimler r ON r.rowid = ara.rowid
             WHERE ara MATCH $sorgu
             ORDER BY ara.rank
-            LIMIT $limit
             """;
         komut.Parameters.AddWithValue("$sorgu", fts);
-        komut.Parameters.AddWithValue("$limit", EnFazlaSonuc);
 
-        var sonuc = new List<(string, string)>();
+        var sonuc = new List<(string, string, long)>();
         using var okuyucu = komut.ExecuteReader();
         while (okuyucu.Read())
-            sonuc.Add((okuyucu.GetString(0), okuyucu.GetString(1)));
+            sonuc.Add((okuyucu.GetString(0), okuyucu.GetString(1), okuyucu.GetInt64(2)));
         return sonuc;
     }
 
