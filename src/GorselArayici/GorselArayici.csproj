@@ -7,7 +7,14 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
+    <!-- .exe dosyasının simgesi (masaüstü, Başlat menüsü, Dosya Gezgini) -->
+    <ApplicationIcon>Assets\logo.ico</ApplicationIcon>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Pencerenin ve görev çubuğunun simgesi için uygulamanın içine gömülür -->
+    <Resource Include="Assets\logo.ico" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />

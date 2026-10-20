@@ -4,32 +4,65 @@ using System.Windows.Media.Imaging;
 namespace GorselArayici.Services;
 
 /// <summary>
-/// Kutularda gösterilecek küçük önizleme resmini hazırlar.
+/// Kutularda ve büyük görünümde gösterilecek resimleri hazırlar.
 /// </summary>
 public static class Onizleyici
 {
-    // Kutudaki resim alanının yüksekliği kadar çözülür: 2500 piksellik ekran görüntüsünü
-    // tam boy bellekte tutmak yerine küçük hali tutulur (resim başı ~100 KB yerine MB'lar).
-    private const int Yukseklik = 240;
+    // Kutu en büyük boyutundayken resim alanı bu kadar. Önizleme buna sığacak kadar küçük çözülür:
+    // 2500 piksellik ekran görüntüsünü tam boy bellekte tutmak yerine küçük hali tutulur.
+    public const int KutuEnBuyukGenislik = 300;
+    public const int KutuEnBuyukYukseklik = 378;
 
-    public static BitmapImage? Yukle(string yol)
+    /// <summary>
+    /// Kutu için küçük önizleme ve resmin gerçek piksel boyutu. Açılamazsa resim null (kutu boş kalır).
+    /// </summary>
+    public static (BitmapImage? Resim, int Genislik, int Yukseklik) KutuIcinYukle(string yol)
     {
         try
         {
             using var dosya = File.OpenRead(yol);
-            var resim = new BitmapImage();
-            resim.BeginInit();
-            resim.StreamSource = dosya;
-            resim.DecodePixelHeight = Yukseklik;
-            resim.CacheOption = BitmapCacheOption.OnLoad; // dosya hemen okunur, sonra kapatılabilir
-            resim.CreateOptions = BitmapCreateOptions.IgnoreColorProfile;
-            resim.EndInit();
-            resim.Freeze(); // başka iş parçacığında hazırlanan resmi pencere kullanabilsin
-            return resim;
+
+            // Önce yalnız boyutu oku (resmin tamamını çözmeden), sonra kutuya sığacak ölçüde çöz.
+            var kare = BitmapDecoder.Create(dosya, BitmapCreateOptions.DelayCreation | BitmapCreateOptions.IgnoreColorProfile,
+                BitmapCacheOption.None).Frames[0];
+            var oran = Math.Min(1.0, Math.Min(
+                (double)KutuEnBuyukGenislik / kare.PixelWidth,
+                (double)KutuEnBuyukYukseklik / kare.PixelHeight));
+            dosya.Position = 0;
+
+            return (Coz(dosya, (int)Math.Max(1, kare.PixelWidth * oran)), kare.PixelWidth, kare.PixelHeight);
         }
         catch
         {
-            return null; // açılamayan resmin kutusu boş kalır
+            return (null, 0, 0);
         }
+    }
+
+    /// <summary>Büyük görünüm için resmin tam hali.</summary>
+    public static BitmapImage? TamYukle(string yol)
+    {
+        try
+        {
+            using var dosya = File.OpenRead(yol);
+            return Coz(dosya, genislik: null);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static BitmapImage Coz(Stream dosya, int? genislik)
+    {
+        var resim = new BitmapImage();
+        resim.BeginInit();
+        resim.StreamSource = dosya;
+        if (genislik is int g)
+            resim.DecodePixelWidth = g;
+        resim.CacheOption = BitmapCacheOption.OnLoad; // dosya hemen okunur, sonra kapatılabilir
+        resim.CreateOptions = BitmapCreateOptions.IgnoreColorProfile;
+        resim.EndInit();
+        resim.Freeze(); // başka iş parçacığında hazırlanan resmi pencere kullanabilsin
+        return resim;
     }
 }

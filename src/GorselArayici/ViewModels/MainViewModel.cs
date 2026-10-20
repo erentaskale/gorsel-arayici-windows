@@ -26,6 +26,10 @@ public partial class ResimOgesi(string ad, string ozet, string yol, DateTime tar
     /// <summary>Önizleme arka planda yüklenir; hazır olunca kutuda belirir.</summary>
     [ObservableProperty]
     private ImageSource? onizleme;
+
+    // Resmin gerçek piksel boyutu (önizleme yüklenirken öğrenilir; büyük görünüm kullanır).
+    public int Genislik { get; set; }
+    public int Yukseklik { get; set; }
 }
 
 public partial class MainViewModel : ObservableObject
@@ -63,6 +67,72 @@ public partial class MainViewModel : ObservableObject
     private const int EnFazlaKutu = 200;
 
     partial void OnTariheGoreChanged(bool value) => _ = AraAsync(AramaMetni);
+
+    public GoruntuleyiciViewModel Goruntuleyici { get; } = new();
+
+    /// <summary>"Kopyalandı" gibi birkaç saniye görünüp kaybolan kısa mesaj.</summary>
+    [ObservableProperty]
+    private string bildirim = "";
+    private int _bildirimNo;
+
+    // Kutu boyutu: Ctrl + tekerlekle değişir, son seçim hatırlanır.
+    private const double KutuEnKucuk = 110;
+    private const double KutuAdimi = 20;
+    private readonly Ayarlar _ayarlar = Ayarlar.Oku();
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(KutuYuksekligi))]
+    private double kutuGenisligi;
+
+    /// <summary>Resim alanı biraz uzun dikdörtgen: telefon ekran görüntüleri de rahat sığsın.</summary>
+    public double KutuYuksekligi => KutuGenisligi * Onizleyici.KutuEnBuyukYukseklik / Onizleyici.KutuEnBuyukGenislik;
+
+    public MainViewModel()
+    {
+        KutuGenisligi = Math.Clamp(_ayarlar.KutuGenisligi, KutuEnKucuk, Onizleyici.KutuEnBuyukGenislik);
+        Goruntuleyici.BildirimVar += Bildir;
+    }
+
+    /// <param name="yon">+1 büyüt, -1 küçült.</param>
+    public void KutuBoyutunuDegistir(int yon)
+    {
+        KutuGenisligi = Math.Clamp(KutuGenisligi + yon * KutuAdimi, KutuEnKucuk, Onizleyici.KutuEnBuyukGenislik);
+        _ayarlar.KutuGenisligi = KutuGenisligi;
+        _ayarlar.Kaydet();
+    }
+
+    /// <summary>Kutuyu uygulamanın içinde büyük açar; ← → ile bu aramanın sonuçlarında gezilir.</summary>
+    [RelayCommand]
+    private void Goruntule(ResimOgesi? oge)
+    {
+        if (oge is not null)
+            Goruntuleyici.Ac(Liste, oge, AramaMetni);
+    }
+
+    /// <summary>Orijinal resmi panoya kopyalar (Ctrl+C).</summary>
+    public void Kopyala(ResimOgesi? oge)
+    {
+        if (oge is null)
+            return;
+        try
+        {
+            Pano.Kopyala(oge.Yol);
+            Bildir("Resim kopyalandı, istediğin yere yapıştırabilirsin (Ctrl+V)");
+        }
+        catch (Exception hata)
+        {
+            Bildir("Kopyalanamadı: " + hata.Message);
+        }
+    }
+
+    private async void Bildir(string mesaj)
+    {
+        var no = ++_bildirimNo;
+        Bildirim = mesaj;
+        await Task.Delay(2500);
+        if (no == _bildirimNo)
+            Bildirim = "";
+    }
 
     public async Task YukleAsync()
     {
@@ -126,8 +196,8 @@ public partial class MainViewModel : ObservableObject
         SonucBilgisi = bulunanlar.Count switch
         {
             0 => "Bu yazıyı içeren resim bulunamadı",
-            > EnFazlaKutu => $"{bulunanlar.Count:N0} resim bulundu, {siraAdi} {EnFazlaKutu} tanesi gösteriliyor · büyütmek için çift tıkla",
-            var n => $"{n:N0} resim bulundu · büyütmek için çift tıkla",
+            > EnFazlaKutu => $"{bulunanlar.Count:N0} resim bulundu, {siraAdi} {EnFazlaKutu} tanesi gösteriliyor",
+            var n => $"{n:N0} resim bulundu",
         };
 
         await OnizlemeleriYukleAsync(ogeler, no);
@@ -144,7 +214,9 @@ public partial class MainViewModel : ObservableObject
         {
             if (no != _aramaNo)
                 return;
-            var resim = Onizleyici.Yukle(oge.Yol);
+            var (resim, genislik, yukseklik) = Onizleyici.KutuIcinYukle(oge.Yol);
+            oge.Genislik = genislik;
+            oge.Yukseklik = yukseklik;
             await pencere.InvokeAsync(() => oge.Onizleme = resim);
         });
     }
@@ -178,23 +250,6 @@ public partial class MainViewModel : ObservableObject
         {
             Taraniyor = false;
             SonOkunan = "";
-        }
-    }
-
-    /// <summary>Resmi Windows'un varsayılan resim uygulamasında (Fotoğraflar) açar.</summary>
-    [RelayCommand]
-    private void Ac(ResimOgesi? oge)
-    {
-        if (oge is null)
-            return;
-        try
-        {
-            // UseShellExecute: dosyayı çift tıklamışız gibi, Windows hangi uygulamayla açılacağına karar verir.
-            Process.Start(new ProcessStartInfo(oge.Yol) { UseShellExecute = true });
-        }
-        catch (Exception hata)
-        {
-            SonucBilgisi = "Resim açılamadı: " + hata.Message;
         }
     }
 

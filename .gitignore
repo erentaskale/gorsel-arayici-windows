@@ -14,6 +14,8 @@
 !/src/**/*.cs
 !/src/**/*.xaml
 !/src/**/*.csproj
+# Uygulama simgesi (kişisel değil, bizim çizdiğimiz logo)
+!/src/**/Assets/*.ico
 
 # Derleme çıktıları (src içinde oluşur)
 bin/
