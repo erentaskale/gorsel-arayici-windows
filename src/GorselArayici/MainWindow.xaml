@@ -3,6 +3,9 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Görsel Arayıcı" Height="600" Width="760"
         Background="#FBF7F2" FontFamily="Segoe UI" FontSize="14">
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="GorunurYap" />
+    </Window.Resources>
     <Grid Margin="24">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -11,7 +14,15 @@
         </Grid.RowDefinitions>
 
         <TextBlock Text="Görsel Arayıcı" FontSize="26" FontWeight="SemiBold" Foreground="#3B2F2A" />
-        <TextBlock Grid.Row="1" Text="{Binding Durum}" Foreground="#8A7B72" Margin="0,4,0,16" />
+        <StackPanel Grid.Row="1" Margin="0,4,0,16">
+            <TextBlock Text="{Binding Durum}" Foreground="#8A7B72" />
+            <StackPanel Visibility="{Binding Taraniyor, Converter={StaticResource GorunurYap}}" Margin="0,8,0,0">
+                <ProgressBar Value="{Binding IlerlemeYuzde}" Height="6"
+                             Foreground="#D9895B" Background="#EDE4DA" BorderThickness="0" />
+                <TextBlock Text="{Binding SonOkunan}" Foreground="#A89A90" FontSize="12"
+                           Margin="0,6,0,0" TextTrimming="CharacterEllipsis" />
+            </StackPanel>
+        </StackPanel>
 
         <!-- Sanallaştırma: 12 bin satırın yalnız ekranda görüneni çizilir -->
         <ListBox Grid.Row="2" ItemsSource="{Binding Resimler}"
