@@ -56,8 +56,22 @@ public partial class MainWindow : Window
 
         // Kapanırken önce taramayı durdurup son grubun kaydını bekle, sonra kapan.
         // Pencere hemen gizlenir; kullanıcı beklemez. Sonraki açılışta kaldığı yerden devam eder.
+        // Pencerenin dışındaki silik alana tıklamak da galeriye döndürür.
+        GoruntuleyiciArkasi.MouseLeftButtonDown += (_, e) =>
+        {
+            if (e.OriginalSource == GoruntuleyiciArkasi)
+                _viewModel.Goruntuleyici.KapatCommand.Execute(null);
+        };
+
         Closing += async (_, e) =>
         {
+            // Büyük görünüm açıkken uygulamanın çarpısı uygulamayı kapatmaz, sadece galeriye döndürür.
+            if (_viewModel.Goruntuleyici.Acik)
+            {
+                e.Cancel = true;
+                _viewModel.Goruntuleyici.KapatCommand.Execute(null);
+                return;
+            }
             if (_kapatilabilir)
                 return;
             e.Cancel = true;

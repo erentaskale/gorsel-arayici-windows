@@ -227,9 +227,13 @@
             </TextBlock>
         </Grid>
 
-        <!-- ===== Büyük görünüm: arama ekranının üstüne açılır ===== -->
-        <Grid Background="#FBF7F2" DataContext="{Binding Goruntuleyici}"
+        <!-- ===== Büyük görünüm: galerinin üstünde açılan pencere =====
+             Arkadaki yarı saydam katman galeriyi silik gösterir; ona tıklamak da pencereyi kapatır. -->
+        <Grid x:Name="GoruntuleyiciArkasi" Background="#993B2F2A" DataContext="{Binding Goruntuleyici}"
               Visibility="{Binding Acik, Converter={StaticResource GorunurYap}}">
+        <Border Margin="48,28" CornerRadius="16" Background="#FBF7F2" BorderBrush="#E3D6C8" BorderThickness="1"
+                ClipToBounds="True">
+        <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
@@ -252,7 +256,9 @@
                     </Button>
                     <Button Content="Fotoğraflar'da aç" Command="{Binding FotograflardaAcCommand}"
                             Style="{StaticResource Dugme}" />
-                    <Button Content="Geri (Esc)" Command="{Binding KapatCommand}" Style="{StaticResource Dugme}" />
+                    <!-- Pencerenin kendi çarpısı: galeriye döner (uygulamayı kapatmaz) -->
+                    <Button Content="✕" Command="{Binding KapatCommand}" Style="{StaticResource Ok}"
+                            Margin="12,0,0,0" ToolTip="Galeriye dön (Esc)" />
                 </StackPanel>
                 <StackPanel VerticalAlignment="Center">
                     <TextBlock Text="{Binding Secili.TarihYazisi}" FontSize="18" FontWeight="SemiBold"
@@ -304,7 +310,9 @@
             </Grid>
 
             <TextBlock Grid.Row="2" Foreground="#B9ABA0" FontSize="12" HorizontalAlignment="Center"
-                       Margin="0,0,0,14" Text="← →: önceki / sonraki  ·  Esc: geri  ·  Ctrl+C: resmi kopyala" />
+                       Margin="0,0,0,14" Text="← →: önceki / sonraki  ·  ✕ ya da Esc: galeriye dön  ·  Ctrl+C: resmi kopyala" />
+        </Grid>
+        </Border>
         </Grid>
 
         <!-- Kısa bildirim ("Kopyalandı" gibi), her iki ekranda da altta belirir -->
