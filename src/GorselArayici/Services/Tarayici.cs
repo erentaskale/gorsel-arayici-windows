@@ -17,6 +17,7 @@ public static class Tarayici
         IReadOnlyList<string> yollar, IProgress<TaramaDurumu> ilerleme, CancellationToken iptal)
     {
         using var veritabani = new Veritabani();
+        veritabani.DiziniHazirla();
         var okunanlar = veritabani.OkunanlariGetir();
 
         // Yalnız yeni ya da değişmiş dosyalar okunur.
