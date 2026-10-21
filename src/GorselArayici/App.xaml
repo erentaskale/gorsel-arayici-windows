@@ -136,6 +136,8 @@
 
         <!-- Sade, yuvarlak köşeli düğme -->
         <Style x:Key="Dugme" TargetType="Button">
+            <!-- Yazı/simge rengi temadan. Açıkça verilmezse Windows'un siyahı gelir ve koyu temada simge kaybolur. -->
+            <Setter Property="Foreground" Value="{DynamicResource Yazi}" />
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="Margin" Value="8,0,0,0" />
             <Setter Property="Focusable" Value="False" />
@@ -144,7 +146,7 @@
                     <ControlTemplate TargetType="Button">
                         <Border x:Name="Zemin" CornerRadius="12" Padding="16,8" Background="{DynamicResource Yuzey}"
                                 BorderBrush="{DynamicResource Kenar}" BorderThickness="1">
-                            <ContentPresenter TextElement.Foreground="{DynamicResource Yazi}" TextElement.FontSize="13"
+                            <ContentPresenter TextElement.Foreground="{TemplateBinding Foreground}" TextElement.FontSize="13"
                                               HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Border>
                         <ControlTemplate.Triggers>
@@ -165,7 +167,7 @@
                     <ControlTemplate TargetType="Button">
                         <Border x:Name="Zemin" Width="44" Height="44" CornerRadius="22" Background="{DynamicResource Yuzey}"
                                 BorderBrush="{DynamicResource Kenar}" BorderThickness="1">
-                            <ContentPresenter TextElement.Foreground="{DynamicResource Yazi}" TextElement.FontSize="18"
+                            <ContentPresenter TextElement.Foreground="{TemplateBinding Foreground}" TextElement.FontSize="18"
                                               HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Border>
                         <ControlTemplate.Triggers>
