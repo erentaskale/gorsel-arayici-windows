@@ -131,10 +131,14 @@ public partial class MainWindow : Window
         {
             var eski = Olcek.ScaleX;
             var yeni = Math.Clamp(eski * Math.Pow(AdimCarpani, e.Delta / 120.0), 1, EnCokYakinlik);
-            // İmlecin altındaki nokta yerinde kalsın: yakınlaştırma imlece doğru olur, ortaya doğru değil.
-            var imlec = e.GetPosition(ResimKabi);
-            Kaydirma.X = imlec.X - (imlec.X - Kaydirma.X) * (yeni / eski);
-            Kaydirma.Y = imlec.Y - (imlec.Y - Kaydirma.Y) * (yeni / eski);
+            // Görünen alanın ortası yerinde kalsın: yakınlaştırma hep ortaya doğru olur (kaydırdıysan o anki ortaya).
+            // Orta nokta resmin KENDİ koordinatına çevrilir (dönüşümden önceki hali); dış alana göre hesaplanırsa
+            // resim alanın içinde ortalı durduğu için aradaki boşluk kadar kayar.
+            // Ekrandaki yer = olcek × nokta + kaydirma; olcek değişince aynı yerde kalması için kaydirma += nokta × (eski − yeni).
+            var orta = new Point(ResimKabi.ActualWidth / 2, ResimKabi.ActualHeight / 2);
+            var nokta = ResimKabi.TranslatePoint(orta, ResimAlani);
+            Kaydirma.X += nokta.X * (eski - yeni);
+            Kaydirma.Y += nokta.Y * (eski - yeni);
             Olcek.ScaleX = Olcek.ScaleY = yeni;
             KaydirmayiSinirla();
             e.Handled = true;
@@ -172,12 +176,12 @@ public partial class MainWindow : Window
         };
     }
 
-    /// <summary>Resim alanın dışına kaçmasın: büyütülmüş resmin kenarı alanın kenarını geçemez.</summary>
+    /// <summary>Resim kaçmasın: büyütülmüş resim, sığmış halinin kapladığı kutuyu her zaman doldursun.</summary>
     private void KaydirmayiSinirla()
     {
         var olcek = Olcek.ScaleX;
-        Kaydirma.X = Math.Clamp(Kaydirma.X, ResimKabi.ActualWidth * (1 - olcek), 0);
-        Kaydirma.Y = Math.Clamp(Kaydirma.Y, ResimKabi.ActualHeight * (1 - olcek), 0);
+        Kaydirma.X = Math.Clamp(Kaydirma.X, ResimAlani.ActualWidth * (1 - olcek), 0);
+        Kaydirma.Y = Math.Clamp(Kaydirma.Y, ResimAlani.ActualHeight * (1 - olcek), 0);
         ResimKabi.Cursor = olcek > 1 ? Cursors.SizeAll : null;
     }
 
