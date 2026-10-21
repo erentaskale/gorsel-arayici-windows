@@ -9,7 +9,7 @@ using GorselArayici.Services;
 namespace GorselArayici.ViewModels;
 
 /// <summary>Bir arama sonucu kutusu.</summary>
-/// <param name="ayBasligi">Izgaradaki grup başlığı ("Ekim 2026"); tarihe göre sıralı değilse boş.</param>
+/// <param name="ayBasligi">Izgaradaki grup başlığı ("Ekim 2026").</param>
 public partial class ResimOgesi(string ad, string ozet, string yol, DateTime tarih, string ayBasligi) : ObservableObject
 {
     public string Ad { get; } = ad;
@@ -62,14 +62,9 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private string sonucBilgisi = "";
 
-    /// <summary>true: en yeni resim önce. false: yazıya en çok uyan önce.</summary>
-    [ObservableProperty]
-    private bool tariheGore = true;
-
     // Kutuların hepsi önizleme resmi demek; bellek şişmesin diye en fazla bu kadar gösterilir.
     private const int EnFazlaKutu = 200;
 
-    partial void OnTariheGoreChanged(bool value) => _ = AraAsync(AramaMetni);
 
     public GoruntuleyiciViewModel Goruntuleyici { get; } = new();
 
@@ -180,25 +175,22 @@ public partial class MainViewModel : ObservableObject
             return;
 
         var ilkKelime = Normallestirici.Kelimeler(sorgu).FirstOrDefault() ?? "";
-        // Veritabanı alaka sırasıyla verir; tarih seçiliyse önce hepsi tarihe göre dizilir, sonra ilk 200 alınır.
-        var hepsi = bulunanlar.Select(b => (b.Yol, b.Metin, Tarih: TarihBulucu.Bul(b.Yol, b.Degisme)));
-        if (TariheGore)
-            hepsi = hepsi.OrderByDescending(b => b.Tarih);
-
-        // Tarihe göre sıralıysa kareler ay ay gruplanır (iPhone gibi); alakaya göreyse tek parça.
+        // Sonuçlar her zaman en yeniden eskiye: önce hepsi tarihe göre dizilir, sonra ilk 200 alınır
+        // (en yeniler kaçmasın). Kareler ay ay gruplanır (iPhone gibi).
         var turkce = new System.Globalization.CultureInfo("tr-TR");
-        var ogeler = hepsi
+        var ogeler = bulunanlar
+            .Select(b => (b.Yol, b.Metin, Tarih: TarihBulucu.Bul(b.Yol, b.Degisme)))
+            .OrderByDescending(b => b.Tarih)
             .Take(EnFazlaKutu)
             .Select(b => new ResimOgesi(Path.GetFileName(b.Yol), Ozet(b.Metin, ilkKelime), b.Yol, b.Tarih,
-                TariheGore ? b.Tarih.ToString("MMMM yyyy", turkce) : ""))
+                b.Tarih.ToString("MMMM yyyy", turkce)))
             .ToList();
         Liste = ogeler;
 
-        var siraAdi = TariheGore ? "en yeni" : "en alakalı";
         SonucBilgisi = bulunanlar.Count switch
         {
             0 => "Bu yazıyı içeren resim bulunamadı",
-            > EnFazlaKutu => $"{bulunanlar.Count:N0} sonuç · {siraAdi} {EnFazlaKutu} tanesi",
+            > EnFazlaKutu => $"{bulunanlar.Count:N0} sonuç · en yeni {EnFazlaKutu} tanesi",
             var n => $"{n:N0} sonuç",
         };
 

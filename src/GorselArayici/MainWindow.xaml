@@ -71,13 +71,6 @@
                 <DockPanel>
                     <Image Source="{StaticResource Logo}" Width="34" Height="34" DockPanel.Dock="Left" Margin="0,0,16,0"
                            Style="{StaticResource AramaVarkenGorunur}" />
-                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center"
-                                Margin="16,0,0,0" Style="{StaticResource AramaVarkenGorunur}">
-                        <!-- Aynı gruptaki iki düğmeden biri seçilince öbürü kendiliğinden kalkar -->
-                        <RadioButton GroupName="Sira" Content="En yeni" IsChecked="{Binding TariheGore}"
-                                     Style="{StaticResource Hap}" />
-                        <RadioButton GroupName="Sira" Content="En alakalı" Style="{StaticResource Hap}" />
-                    </StackPanel>
 
                     <!-- Arama kutusu. WPF'te hazır "silik ipucu yazısı" yok; kutu boşken arkadaki yazı görünür. -->
                     <Border Background="{StaticResource Beyaz}" BorderBrush="{StaticResource KenarKoyu}" BorderThickness="1"
