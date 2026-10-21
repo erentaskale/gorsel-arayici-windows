@@ -16,6 +16,7 @@ public static class Tarayici
     public static async Task<int> TaraAsync(
         IReadOnlyList<string> yollar, IProgress<TaramaDurumu> ilerleme, CancellationToken iptal)
     {
+        Veritabani.SaglikKontrolu();
         using var veritabani = new Veritabani();
         veritabani.DiziniHazirla();
         var okunanlar = veritabani.OkunanlariGetir();

@@ -39,6 +39,53 @@ public sealed class Veritabani : IDisposable
     }
 
     /// <summary>
+    /// Açılışta bir kez: veritabanı sağlam mı? Bozuksa silinmez, yanına "galeri.bozuk-…db" adıyla kaldırılır ve
+    /// temiz bir veritabanıyla baştan başlanır. Veri resimlerden üretildiği için hiçbir şey kaybolmaz, yalnız
+    /// tarama bir kez baştan yapılır (~7 dk). Taramadan önce çağrılır.
+    /// </summary>
+    /// <returns>Bozuk çıkıp yenisi kurulduysa true.</returns>
+    public static bool SaglikKontrolu()
+    {
+        if (!File.Exists(DosyaYolu))
+            return false;
+
+        bool saglam;
+        try
+        {
+            using var vt = new Veritabani();
+            // quick_check: tablolar ve indeksler tutarlı mı. FTS5'in kendi dizinini ayrıca kendisine sorarız;
+            // bozuksa bu komut hata fırlatır.
+            saglam = vt.Tek("PRAGMA quick_check") == "ok";
+            if (saglam)
+                vt.Calistir("INSERT INTO ara(ara) VALUES('integrity-check')");
+        }
+        catch (SqliteException)
+        {
+            saglam = false;
+        }
+        if (saglam)
+            return false;
+
+        // Açık bağlantılar dosyayı tutmasın, sonra ana dosyayı ve yan dosyalarını (-wal, -shm) birlikte kenara al.
+        SqliteConnection.ClearAllPools();
+        var ek = DateTime.Now.ToString("yyyyMMdd-HHmmss");
+        try
+        {
+            foreach (var uzanti in new[] { "", "-wal", "-shm" })
+            {
+                var kaynak = DosyaYolu + uzanti;
+                if (File.Exists(kaynak))
+                    File.Move(kaynak, Path.Combine(Path.GetDirectoryName(DosyaYolu)!, $"galeri.bozuk-{ek}.db{uzanti}"));
+            }
+            return true;
+        }
+        catch (IOException)
+        {
+            return false; // dosya o an kilitliyse eskisiyle devam; bir sonraki açılışta tekrar denenir
+        }
+    }
+
+    /// <summary>
     /// Dizin boşsa (dizinden önce okunmuş eski kayıtlar) resimler tablosundan bir kerede doldurur.
     /// </summary>
     public void DiziniHazirla()
@@ -144,6 +191,13 @@ public sealed class Veritabani : IDisposable
         while (okuyucu.Read())
             sonuc.Add((okuyucu.GetString(0), okuyucu.GetString(1), okuyucu.GetInt64(2)));
         return sonuc;
+    }
+
+    private string? Tek(string sql)
+    {
+        using var komut = _baglanti.CreateCommand();
+        komut.CommandText = sql;
+        return komut.ExecuteScalar()?.ToString();
     }
 
     private void Calistir(string sql)
