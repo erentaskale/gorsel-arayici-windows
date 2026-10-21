@@ -240,10 +240,21 @@
 
                         <!-- Resim ve işaret kutuları aynı piksel ölçüsünde çizilir, Viewbox ikisini birlikte
                              pencereye sığdırır; böylece kutular kelimelerin tam üstünde kalır.
-                             DownOnly: küçük resim olduğundan büyük gösterilip bulanıklaşmaz. -->
-                        <Viewbox Grid.Column="1" Stretch="Uniform" StretchDirection="DownOnly" Margin="0,0,0,8">
+                             DownOnly: küçük resim olduğundan büyük gösterilip bulanıklaşmaz.
+                             Yakınlaştırma: tekerlek Viewbox'ı ölçekler (resim ve işaretler birlikte büyür),
+                             sürükleme kaydırır. ClipToBounds: büyüyen resim üst şeridin üstüne taşmasın. -->
+                        <Grid x:Name="ResimKabi" Grid.Column="1" Margin="0,0,0,8" ClipToBounds="True"
+                              Background="Transparent">
+                        <Viewbox x:Name="ResimAlani" Stretch="Uniform" StretchDirection="DownOnly">
+                            <Viewbox.RenderTransform>
+                                <TransformGroup>
+                                    <ScaleTransform x:Name="Olcek" />
+                                    <TranslateTransform x:Name="Kaydirma" />
+                                </TransformGroup>
+                            </Viewbox.RenderTransform>
                             <Grid Width="{Binding ResimGenislik}" Height="{Binding ResimYukseklik}">
-                                <Image Source="{Binding Resim}" Stretch="Fill" />
+                                <Image Source="{Binding Resim}" Stretch="Fill"
+                                       RenderOptions.BitmapScalingMode="HighQuality" />
                                 <ItemsControl ItemsSource="{Binding Isaretler}"
                                               Visibility="{Binding IsaretleriGoster, Converter={StaticResource GorunurYap}}">
                                     <ItemsControl.ItemsPanel>
@@ -269,11 +280,12 @@
                                 </ItemsControl>
                             </Grid>
                         </Viewbox>
+                        </Grid>
                     </Grid>
 
                     <TextBlock Grid.Row="2" Foreground="{StaticResource SolukYazi}" FontSize="12" HorizontalAlignment="Center"
                                Margin="0,0,0,16"
-                               Text="← →: önceki / sonraki  ·  ✕ ya da Esc: galeriye dön  ·  Ctrl+C: resmi kopyala" />
+                               Text="← →: önceki / sonraki  ·  Tekerlek: yakınlaştır  ·  Sürükle: kaydır  ·  Çift tık: sığdır  ·  Esc: galeriye dön  ·  Ctrl+C: kopyala" />
                 </Grid>
             </Border>
         </Grid>

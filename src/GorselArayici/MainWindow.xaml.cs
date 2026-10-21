@@ -35,9 +35,15 @@ public partial class MainWindow : Window
             e.Handled = true;
         };
 
-        // Büyük görünüm kapanınca, en son bakılan resmin kutusu seçili ve görünür olsun.
+        YakinlastirmayiBagla();
+
         _viewModel.Goruntuleyici.PropertyChanged += (_, e) =>
         {
+            // Başka resme geçince ya da büyük görünüm açılıp kapanınca yeni resim pencereye sığmış olarak başlasın.
+            if (e.PropertyName is nameof(GoruntuleyiciViewModel.Secili) or nameof(GoruntuleyiciViewModel.Acik))
+                Sigdir();
+
+            // Büyük görünüm kapanınca, en son bakılan resmin kutusu seçili ve görünür olsun.
             if (e.PropertyName == nameof(GoruntuleyiciViewModel.Acik) && !_viewModel.Goruntuleyici.Acik)
             {
                 if (_viewModel.Goruntuleyici.Secili is not { } secili)
@@ -108,6 +114,80 @@ public partial class MainWindow : Window
             _viewModel.Kopyala(SonucListesi.SelectedItem as ResimOgesi);
             e.Handled = true;
         }
+    }
+
+    // ===== Büyük görünümde yakınlaştırma =====
+    // Resim (ve üstündeki işaretler) iki dönüşümle gösterilir: önce Olcek ile büyütülür, sonra Kaydirma ile
+    // yerinden oynatılır. Ekrandaki nokta = olcek × resimdeki nokta + kaydirma.
+    private const double EnCokYakinlik = 8;   // en fazla 8 kat
+    private const double AdimCarpani = 1.2;   // tekerleğin bir "tık"ı %20 büyütür
+    private bool _surukleniyor;
+    private Point _surukleBaslangici;
+    private Point _kaydirmaBaslangici;
+
+    private void YakinlastirmayiBagla()
+    {
+        ResimKabi.PreviewMouseWheel += (_, e) =>
+        {
+            var eski = Olcek.ScaleX;
+            var yeni = Math.Clamp(eski * Math.Pow(AdimCarpani, e.Delta / 120.0), 1, EnCokYakinlik);
+            // İmlecin altındaki nokta yerinde kalsın: yakınlaştırma imlece doğru olur, ortaya doğru değil.
+            var imlec = e.GetPosition(ResimKabi);
+            Kaydirma.X = imlec.X - (imlec.X - Kaydirma.X) * (yeni / eski);
+            Kaydirma.Y = imlec.Y - (imlec.Y - Kaydirma.Y) * (yeni / eski);
+            Olcek.ScaleX = Olcek.ScaleY = yeni;
+            KaydirmayiSinirla();
+            e.Handled = true;
+        };
+
+        ResimKabi.MouseLeftButtonDown += (_, e) =>
+        {
+            if (e.ClickCount == 2)
+            {
+                Sigdir();
+                return;
+            }
+            if (Olcek.ScaleX <= 1)
+                return; // sığmış resimde kaydıracak bir şey yok
+            _surukleniyor = true;
+            _surukleBaslangici = e.GetPosition(ResimKabi);
+            _kaydirmaBaslangici = new Point(Kaydirma.X, Kaydirma.Y);
+            ResimKabi.CaptureMouse(); // fare alanın dışına çıksa da sürükleme devam etsin
+        };
+
+        ResimKabi.MouseMove += (_, e) =>
+        {
+            if (!_surukleniyor)
+                return;
+            var simdi = e.GetPosition(ResimKabi);
+            Kaydirma.X = _kaydirmaBaslangici.X + (simdi.X - _surukleBaslangici.X);
+            Kaydirma.Y = _kaydirmaBaslangici.Y + (simdi.Y - _surukleBaslangici.Y);
+            KaydirmayiSinirla();
+        };
+
+        ResimKabi.MouseLeftButtonUp += (_, _) =>
+        {
+            _surukleniyor = false;
+            ResimKabi.ReleaseMouseCapture();
+        };
+    }
+
+    /// <summary>Resim alanın dışına kaçmasın: büyütülmüş resmin kenarı alanın kenarını geçemez.</summary>
+    private void KaydirmayiSinirla()
+    {
+        var olcek = Olcek.ScaleX;
+        Kaydirma.X = Math.Clamp(Kaydirma.X, ResimKabi.ActualWidth * (1 - olcek), 0);
+        Kaydirma.Y = Math.Clamp(Kaydirma.Y, ResimKabi.ActualHeight * (1 - olcek), 0);
+        ResimKabi.Cursor = olcek > 1 ? Cursors.SizeAll : null;
+    }
+
+    /// <summary>Yakınlaştırmayı sıfırla: resim yeniden pencereye sığar.</summary>
+    private void Sigdir()
+    {
+        Olcek.ScaleX = Olcek.ScaleY = 1;
+        Kaydirma.X = Kaydirma.Y = 0;
+        _surukleniyor = false;
+        ResimKabi.Cursor = null;
     }
 
     /// <summary>Kısayol tuşuna basılınca: pencere öne gelir, arama kutusu yazmaya hazır olur.</summary>
