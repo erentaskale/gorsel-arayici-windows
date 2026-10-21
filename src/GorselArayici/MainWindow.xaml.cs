@@ -56,6 +56,12 @@ public partial class MainWindow : Window
 
         PreviewKeyDown += TusaBasildi;
 
+        // Tema düğmesi ve başlık çubuğu
+        TemaDugmesi.Click += (_, _) => Tema.Degistir();
+        Tema.Degisti += TemaSimgesiniGuncelle;
+        TemaSimgesiniGuncelle();
+        SourceInitialized += (_, _) => Tema.BaslikCubugunuBoya(this);
+
         // Ctrl+Alt+F: pencere tutamacı (handle) ancak SourceInitialized'da hazır olduğu için burada.
         KisayolTusu? kisayol = null;
         SourceInitialized += (_, _) => kisayol = new KisayolTusu(this, OneGetir);
@@ -192,6 +198,12 @@ public partial class MainWindow : Window
         Kaydirma.X = Kaydirma.Y = 0;
         _surukleniyor = false;
         ResimKabi.Cursor = null;
+    }
+
+    private void TemaSimgesiniGuncelle()
+    {
+        TemaSimgesi.Text = Tema.Koyu ? "" : ""; // güneş : ay (Windows simge fontu)
+        TemaDugmesi.ToolTip = Tema.Koyu ? "Açık temaya geç" : "Koyu temaya geç";
     }
 
     /// <summary>Kısayol tuşuna basılınca: pencere öne gelir, arama kutusu yazmaya hazır olur.</summary>

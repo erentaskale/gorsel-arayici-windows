@@ -37,6 +37,7 @@ public partial class App : Application
         TaskScheduler.UnobservedTaskException += (_, a) => { HatayiYaz(a.Exception); a.SetObserved(); };
 
         base.OnStartup(e);
+        Tema.Baslat(); // pencere açılmadan önce: ilk kare doğru renklerle çizilsin
         new MainWindow().Show();
     }
 

@@ -4,17 +4,26 @@ using System.Text.Json;
 namespace GorselArayici.Services;
 
 /// <summary>
-/// Kullanıcının seçtiği küçük tercihleri (şimdilik ızgaradaki sütun sayısı) hatırlar.
+/// Kullanıcının seçtiği küçük tercihleri (ızgaradaki sütun sayısı, tema) hatırlar.
 /// Veritabanının yanında, AppData\Local\GorselArayici\ayarlar.json dosyasında durur.
 /// </summary>
 public sealed class Ayarlar
 {
     public int SutunSayisi { get; set; } = 6;
 
+    /// <summary>null: Windows'un ayarına uy. "Koyu" ya da "Acik": kullanıcı düğmeyle seçti.</summary>
+    public string? Tema { get; set; }
+
+    /// <summary>
+    /// Uygulamanın tek ayar nesnesi. Herkes bunu kullanır: iki ayrı kopya olsaydı biri kaydederken
+    /// öbürünün değişikliğini eski değerle ezerdi (sütun sayısını kaydeden, temayı geri alırdı).
+    /// </summary>
+    public static Ayarlar Simdiki { get; } = Oku();
+
     private static string DosyaYolu =>
         Path.Combine(Path.GetDirectoryName(Veritabani.DosyaYolu)!, "ayarlar.json");
 
-    public static Ayarlar Oku()
+    private static Ayarlar Oku()
     {
         try
         {

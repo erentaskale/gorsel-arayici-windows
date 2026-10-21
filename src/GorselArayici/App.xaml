@@ -3,17 +3,13 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <Application.Resources>
-        <!-- ===== Adaçayı paleti: bütün renkler buradan gelir, tek yerden değişir ===== -->
-        <SolidColorBrush x:Key="Zemin" Color="#F6F7F4" />
-        <SolidColorBrush x:Key="Panel" Color="#ECEFE8" />
-        <SolidColorBrush x:Key="Beyaz" Color="#FFFFFF" />
-        <SolidColorBrush x:Key="Kenar" Color="#DCE3D9" />
-        <SolidColorBrush x:Key="KenarKoyu" Color="#C8D3C4" />
-        <SolidColorBrush x:Key="Yazi" Color="#1F2A24" />
-        <SolidColorBrush x:Key="SolukYazi" Color="#7C8780" />
-        <SolidColorBrush x:Key="Vurgu" Color="#3F7D5C" />
-        <SolidColorBrush x:Key="VurguAcik" Color="#DCEBDF" />
-        <SolidColorBrush x:Key="ResimBos" Color="#E6EBE3" />
+        <ResourceDictionary>
+        <!-- ===== Renkler Temalar\Acik.xaml ve Temalar\Koyu.xaml'de. Açılışta biri yüklenir; tema değişince
+             Tema.cs bu sıradaki sözlüğü ötekiyle değiştirir. Renkler DynamicResource ile okunduğu için
+             her şey anında yeni renge geçer (StaticResource bir kez okur, değişikliği görmez). ===== -->
+        <ResourceDictionary.MergedDictionaries>
+            <ResourceDictionary Source="Temalar/Acik.xaml" />
+        </ResourceDictionary.MergedDictionaries>
 
         <!-- Font: DM Sans uygulamanın içine gömülü; bulunamazsa Windows'un kendi fontu -->
         <FontFamily x:Key="Font">pack://application:,,,/Assets/Fonts/#DM Sans, Segoe UI</FontFamily>
@@ -61,6 +57,83 @@
             </DrawingImage.Drawing>
         </DrawingImage>
 
+        <!-- ===== İnce kaydırma çubuğu: Windows'un gri çubuğu koyu temada sırıtıyordu =====
+             Ok düğmeleri yok; yalnız yuvarlak bir tutamaç. Rengi temadan gelir. -->
+        <Style x:Key="BosAlan" TargetType="RepeatButton">
+            <Setter Property="Focusable" Value="False" />
+            <Setter Property="IsTabStop" Value="False" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RepeatButton">
+                        <Border Background="Transparent" />
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="Tutamac" TargetType="Thumb">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Thumb">
+                        <Border x:Name="Govde" CornerRadius="4" Margin="2" Background="{DynamicResource KenarKoyu}" />
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Govde" Property="Background" Value="{DynamicResource SolukYazi}" />
+                            </Trigger>
+                            <Trigger Property="IsDragging" Value="True">
+                                <Setter TargetName="Govde" Property="Background" Value="{DynamicResource SolukYazi}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style TargetType="ScrollBar">
+            <Setter Property="Width" Value="10" />
+            <Setter Property="MinWidth" Value="10" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ScrollBar">
+                        <Track x:Name="PART_Track" IsDirectionReversed="True">
+                            <Track.DecreaseRepeatButton>
+                                <RepeatButton Command="ScrollBar.PageUpCommand" Style="{StaticResource BosAlan}" />
+                            </Track.DecreaseRepeatButton>
+                            <Track.IncreaseRepeatButton>
+                                <RepeatButton Command="ScrollBar.PageDownCommand" Style="{StaticResource BosAlan}" />
+                            </Track.IncreaseRepeatButton>
+                            <Track.Thumb>
+                                <Thumb Style="{StaticResource Tutamac}" />
+                            </Track.Thumb>
+                        </Track>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <!-- Yatay çubuk (şu an kullanılmıyor ama bir yerde çıkarsa düzgün dursun) -->
+                <Trigger Property="Orientation" Value="Horizontal">
+                    <Setter Property="Width" Value="Auto" />
+                    <Setter Property="MinWidth" Value="0" />
+                    <Setter Property="Height" Value="10" />
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="ScrollBar">
+                                <Track x:Name="PART_Track">
+                                    <Track.DecreaseRepeatButton>
+                                        <RepeatButton Command="ScrollBar.PageLeftCommand" Style="{StaticResource BosAlan}" />
+                                    </Track.DecreaseRepeatButton>
+                                    <Track.IncreaseRepeatButton>
+                                        <RepeatButton Command="ScrollBar.PageRightCommand" Style="{StaticResource BosAlan}" />
+                                    </Track.IncreaseRepeatButton>
+                                    <Track.Thumb>
+                                        <Thumb Style="{StaticResource Tutamac}" />
+                                    </Track.Thumb>
+                                </Track>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
         <!-- Sade, yuvarlak köşeli düğme -->
         <Style x:Key="Dugme" TargetType="Button">
             <Setter Property="Cursor" Value="Hand" />
@@ -69,14 +142,14 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="Zemin" CornerRadius="12" Padding="16,8" Background="{StaticResource Beyaz}"
-                                BorderBrush="{StaticResource Kenar}" BorderThickness="1">
-                            <ContentPresenter TextElement.Foreground="{StaticResource Yazi}" TextElement.FontSize="13"
+                        <Border x:Name="Zemin" CornerRadius="12" Padding="16,8" Background="{DynamicResource Yuzey}"
+                                BorderBrush="{DynamicResource Kenar}" BorderThickness="1">
+                            <ContentPresenter TextElement.Foreground="{DynamicResource Yazi}" TextElement.FontSize="13"
                                               HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Zemin" Property="BorderBrush" Value="{StaticResource Vurgu}" />
+                                <Setter TargetName="Zemin" Property="BorderBrush" Value="{DynamicResource Vurgu}" />
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -90,19 +163,20 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="Zemin" Width="44" Height="44" CornerRadius="22" Background="{StaticResource Beyaz}"
-                                BorderBrush="{StaticResource Kenar}" BorderThickness="1">
-                            <ContentPresenter TextElement.Foreground="{StaticResource Yazi}" TextElement.FontSize="18"
+                        <Border x:Name="Zemin" Width="44" Height="44" CornerRadius="22" Background="{DynamicResource Yuzey}"
+                                BorderBrush="{DynamicResource Kenar}" BorderThickness="1">
+                            <ContentPresenter TextElement.Foreground="{DynamicResource Yazi}" TextElement.FontSize="18"
                                               HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Zemin" Property="BorderBrush" Value="{StaticResource Vurgu}" />
+                                <Setter TargetName="Zemin" Property="BorderBrush" Value="{DynamicResource Vurgu}" />
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
         </Style>
+        </ResourceDictionary>
     </Application.Resources>
 </Application>

@@ -77,7 +77,7 @@ public partial class MainViewModel : ObservableObject
     // Kareler pencereyi her zaman tam doldurur; değişen şey satırdaki kare sayısıdır.
     private const int EnAzSutun = 3;
     private const int EnCokSutun = 12;
-    private readonly Ayarlar _ayarlar = Ayarlar.Oku();
+    private readonly Ayarlar _ayarlar = Ayarlar.Simdiki;
 
     [ObservableProperty]
     private int sutunSayisi;

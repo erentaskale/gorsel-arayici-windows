@@ -1,0 +1,20 @@
+<!-- Koyu tema: adaçayının gece hali. Jenerik siyah-gri değil, derin orman yeşili tonları.
+     Vurgu yeşili biraz açık: koyu zeminde okunsun. Acik.xaml ile aynı anahtarlar. -->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <SolidColorBrush x:Key="Zemin" Color="#141A16" />
+    <SolidColorBrush x:Key="Panel" Color="#1B231E" />
+    <SolidColorBrush x:Key="Yuzey" Color="#1F2823" />
+    <SolidColorBrush x:Key="Kenar" Color="#2B3630" />
+    <SolidColorBrush x:Key="KenarKoyu" Color="#38463E" />
+    <SolidColorBrush x:Key="Yazi" Color="#E4EBE6" />
+    <SolidColorBrush x:Key="SolukYazi" Color="#8E9C94" />
+    <SolidColorBrush x:Key="Vurgu" Color="#6DB38A" />
+    <SolidColorBrush x:Key="VurguAcik" Color="#24402F" />
+    <SolidColorBrush x:Key="ResimBos" Color="#1F2823" />
+    <SolidColorBrush x:Key="Golge" Color="#1AFFFFFF" />      <!-- koyuda kareye gelince hafif aydınlanma -->
+    <SolidColorBrush x:Key="Arkaplan" Color="#CC090D0B" />
+    <SolidColorBrush x:Key="IsaretZemin" Color="#406DB38A" />
+    <SolidColorBrush x:Key="BildirimZemin" Color="#E4EBE6" />
+    <SolidColorBrush x:Key="BildirimYazi" Color="#141A16" />
+</ResourceDictionary>
